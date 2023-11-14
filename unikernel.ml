@@ -44,13 +44,56 @@ module Main (S : Tcpip.Stack.V4V6) = struct
         (top_heap_words * 8) (stack_size * 8)
       );
 
-      Solo5_os.Time.sleep_ns (Duration.of_f 0.1) >>= fun () ->
+      Solo5_os.Time.sleep_ns (Duration.of_f 10.1) >>= fun () ->
       aux ()
     in
     aux ()
    
   let start s =
     let port = Key_gen.port () in
+    let addr = Ipaddr.V4.of_string_exn @@ Key_gen.addr () in
+
+(* The following is for testing connexions: [nc]<-[unikernel] *)
+    let fetch addr port =
+      Log.info (fun f -> f "Connecting to %a:%d" Ipaddr.V4.pp addr port);
+      
+      S.TCP.create_connection (S.tcp s) (Ipaddr.V4 addr, port) >>= function
+        | Error e ->
+            Logs.warn (fun f ->
+                f "Error establishing connection: %a"
+                  S.TCP.pp_error e);
+            Lwt.return_unit
+        | Ok flow -> (
+          S.TCP.write flow (Cstruct.of_string "hello") >>= function
+            | Error `Closed ->
+              Logs.debug (fun f -> f "Closing connection!");
+              Lwt.return_unit
+            | Error e ->
+              Logs.warn (fun f -> f "Error reading data from established connection");
+              Lwt.return_unit
+            | Ok () ->
+              Logs.debug (fun f -> f "Established, now closing!");
+              S.TCP.close flow >>= fun () ->
+              Solo5_os.Time.sleep_ns (Duration.of_f 1.0) >>= fun () -> (* record some traffic after close *)
+              Lwt.return_unit
+        ) >>= fun () ->
+
+      Log.info (fun f -> f "done");
+      Lwt.return_unit
+    in
+
+    (* infinite tries to fetch data, always fails to no SYN-ACK reply in this test scenario *)
+    let rec loop i =
+      Log.info (fun f -> f "Fetch data #%d" i);
+      fetch addr port >>= fun () ->
+      loop (i+1)
+    in
+
+    loop 0
+
+(* The following is for testing connexions: [nc]->[unikernel]
+
+
     S.TCP.listen (S.tcp s) ~port (fun flow ->
         let dst, dst_port = S.TCP.dst flow in
         Logs.debug (fun f ->
@@ -71,4 +114,6 @@ module Main (S : Tcpip.Stack.V4V6) = struct
             S.TCP.close flow);
 
     S.listen s
+
+*)
 end
