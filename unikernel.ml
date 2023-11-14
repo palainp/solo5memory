@@ -9,6 +9,7 @@ module Main (S : Tcpip.Stack.V4V6) = struct
     let rec aux () =
       Log.info (fun f -> f "Collection");
       Gc.full_major ();
+      Gc.compact ();
       Solo5_os.Time.sleep_ns (Duration.of_f 30.0) >>= fun () ->
       aux ()
     in
@@ -43,7 +44,7 @@ module Main (S : Tcpip.Stack.V4V6) = struct
         (top_heap_words * 8) (stack_size * 8)
       );
 
-      Solo5_os.Time.sleep_ns (Duration.of_f 1.0) >>= fun () ->
+      Solo5_os.Time.sleep_ns (Duration.of_f 0.1) >>= fun () ->
       aux ()
     in
     aux ()
