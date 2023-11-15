@@ -19,15 +19,13 @@ module Main (S : Tcpip.Stack.V4V6) = struct
     let used free total = total - free in
 
     let rec aux i =
-      let { Solo5_os.Memory.free_words; heap_words; _ } = Solo5_os.Memory.stat () in
+      let { Solo5_os.Memory.live_words; heap_words; _ } = Solo5_os.Memory.stat () in
       let mem_total = heap_words * 8 in
-      let mem_free = free_words * 8 in
-      let mem_used = used mem_free mem_total in
+      let mem_used = live_words * 8 in
 
-      let { Solo5_os.Memory.free_words; heap_words; _ } = Solo5_os.Memory.quick_stat () in
+      let { Solo5_os.Memory.live_words; heap_words; _ } = Solo5_os.Memory.quick_stat () in
       let mem_qtotal = heap_words * 8 in
-      let mem_qfree = free_words * 8 in
-      let mem_qused = used mem_qfree mem_qtotal in
+      let mem_qused = live_words * 8 in
 
       let {Gc.minor_words; promoted_words; major_words; minor_collections; major_collections; heap_words; heap_chunks; live_words; live_blocks; free_words; free_blocks; largest_free; fragments; compactions; top_heap_words; stack_size; forced_major_collections } = Gc.stat () in
 
