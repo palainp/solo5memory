@@ -34,7 +34,7 @@ nc -s 10.0.0.1 127.0.0.1 -p 8080
 
 And run the unikernel:
 ```bash
-solo5-spt --net:service=service --mem=16 dist/network.spt --arg=--ipv4-gateway=10.0.0.1
+solo5-spt --net:service=service --mem=16 dist/network.spt --ipv4-gateway=10.0.0.1
 ```
 
 Another test (the unikernel is the server and you want to start multiple connexion from netcat, you'll have to remove the iptables FORWARD rules):
