@@ -16,8 +16,6 @@ module Main (S : Tcpip.Stack.V4V6) = struct
     aux ()
 
   let report_mem_usage =
-    let used free total = total - free in
-
     let rec aux i =
       let { Solo5_os.Memory.live_words; heap_words; _ } = Solo5_os.Memory.stat () in
       let mem_total = heap_words * 8 in
