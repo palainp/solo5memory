@@ -5,46 +5,18 @@ module Log = (val Logs.src_log src : Logs.LOG)
 
 module Main (S : Tcpip.Stack.V4V6) = struct
 
-  let force_collection =
-    let rec aux () =
-      Log.info (fun f -> f "Collection");
-      Gc.full_major ();
-      Gc.compact ();
-      Solo5_os.Time.sleep_ns (Duration.of_f 30.0) >>= fun () ->
-      aux ()
-    in
-    aux ()
+  let html = Cstruct.of_string
+  "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">
+   <html><head>
+   <title>301 Moved Permanently</title>
+   </head><body>
+   <h1>Moved Permanently</h1>
+   <p>The document has moved <a href=\"https://www.joedog.org/\">here</a>.</p>
+   <hr>
+   <address>Apache/2.2.31 (Amazon) Server at www.joedog.org Port 80</address>
+   </body></html>"
 
-  let report_mem_usage =
-    let rec aux i =
-      let { Solo5_os.Memory.live_words; heap_words; _ } = Solo5_os.Memory.stat () in
-      let mem_total = heap_words * 8 in
-      let mem_used = live_words * 8 in
 
-      let { Solo5_os.Memory.live_words; heap_words; _ } = Solo5_os.Memory.quick_stat () in
-      let mem_qtotal = heap_words * 8 in
-      let mem_qused = live_words * 8 in
-
-      let {Gc.minor_words; promoted_words; major_words; minor_collections; major_collections; heap_words; heap_chunks; live_words; live_blocks; free_words; free_blocks; largest_free; fragments; compactions; top_heap_words; stack_size; forced_major_collections } = Gc.stat () in
-
-      Log.info (fun f -> f "Solo5.Memory: [%d] quick used %dB/%dB / mallinfo used %dB/%dB / delta %d"
-        i
-        mem_qused mem_qtotal
-        mem_used mem_total
-        (mem_qused-mem_used)
-      );
-
-      Log.info (fun f -> f "Gc: [%d] heap %dB / live %dB / free %dB / top %dB / stack %dB"
-        i
-        (heap_words * 8) (live_words * 8) (free_words * 8)
-        (top_heap_words * 8) (stack_size * 8)
-      );
-
-      Solo5_os.Time.sleep_ns (Duration.of_f 1.0) >>= fun () ->
-      aux (i+1)
-    in
-    aux 0
-   
   let start s =
     let port = Key_gen.port () in
 
@@ -67,6 +39,8 @@ module Main (S : Tcpip.Stack.V4V6) = struct
         | Ok (`Data b) ->
             Logs.debug (fun f ->
                 f "read: %d bytes:\n%s" (Cstruct.length b) (Cstruct.to_string b));
+            (* reply with a html hello world in any case *)
+            S.TCP.write flow html ;
             S.TCP.close flow);
 
     S.listen s
