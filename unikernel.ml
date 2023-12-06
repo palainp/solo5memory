@@ -5,13 +5,16 @@ module Log = (val Logs.src_log src : Logs.LOG)
 
 module Main (S : Tcpip.Stack.V4V6) = struct
 
-  let html = Cstruct.of_string
-  "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">
+  let http = Cstruct.of_string
+  "HTTP/1.1 200 OK\r\n
+   content-type: text/html; charset=utf-8\r\n
+   content-Length: 292\r\n
+   <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">
    <html><head>
-   <title>301 Moved Permanently</title>
+   <title>Hello world</title>
    </head><body>
-   <h1>Moved Permanently</h1>
-   <p>The document has moved <a href=\"https://www.joedog.org/\">here</a>.</p>
+   <h1>Hello world</h1>
+   <p>Hello world.</p>
    <hr>
    <address>Apache/2.2.31 (Amazon) Server at www.joedog.org Port 80</address>
    </body></html>"
@@ -40,7 +43,7 @@ module Main (S : Tcpip.Stack.V4V6) = struct
             Logs.debug (fun f ->
                 f "read: %d bytes:\n%s" (Cstruct.length b) (Cstruct.to_string b));
             (* reply with a html hello world in any case *)
-            S.TCP.write flow html ;
+            S.TCP.write flow http ;
             S.TCP.close flow);
 
     S.listen s
